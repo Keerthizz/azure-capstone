@@ -1,0 +1,226 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.47.16.16243",
+      "templateHash": "5625713587629084101"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "centralindia",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "baseName": {
+      "type": "string",
+      "defaultValue": "capstone",
+      "metadata": {
+        "description": "Base name used for resource naming"
+      }
+    }
+  },
+  "variables": {
+    "uniqueSuffix": "[uniqueString(resourceGroup().id)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-vnet', parameters('baseName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "AppSubnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "delegations": [
+                {
+                  "name": "delegation",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverFarms"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "DataSubnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "AppGwSubnet",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2023-11-15",
+      "name": "[format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "enableFreeTier": true,
+        "publicNetworkAccess": "Disabled",
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0
+          }
+        ],
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2023-11-15",
+      "name": "[format('{0}/{1}', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), 'taskdb')]",
+      "properties": {
+        "resource": {
+          "id": "taskdb"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2023-11-15",
+      "name": "[format('{0}/{1}/{2}', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), 'taskdb', 'boards')]",
+      "properties": {
+        "resource": {
+          "id": "boards",
+          "partitionKey": {
+            "paths": [
+              "/ownerId"
+            ],
+            "kind": "Hash"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), 'taskdb')]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2023-11-15",
+      "name": "[format('{0}/{1}/{2}', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), 'taskdb', 'tasks')]",
+      "properties": {
+        "resource": {
+          "id": "tasks",
+          "partitionKey": {
+            "paths": [
+              "/boardId"
+            ],
+            "kind": "Hash"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), 'taskdb')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-01-01",
+      "name": "[format('asp-{0}', parameters('baseName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "B1",
+        "tier": "Basic"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-01-01",
+      "name": "[format('app-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('baseName')))]",
+        "siteConfig": {
+          "linuxFxVersion": "NODE|22-lts",
+          "appSettings": [
+            {
+              "name": "COSMOS_ENDPOINT",
+              "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), '2023-11-15').documentEndpoint]"
+            }
+          ]
+        },
+        "virtualNetworkSubnetId": "[format('{0}/subnets/AppSubnet', resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', parameters('baseName'))))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('baseName')))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-vnet', parameters('baseName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+      "apiVersion": "2023-11-15",
+      "name": "[format('{0}/{1}', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')), guid(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), 'data-contributor'))]",
+      "properties": {
+        "roleDefinitionId": "[format('{0}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002', resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))))]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), '2023-01-01', 'full').identity.principalId]",
+        "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('baseName'), variables('uniqueSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[format('st{0}{1}', parameters('baseName'), variables('uniqueSuffix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "allowBlobPublicAccess": true
+      }
+    }
+  ],
+  "outputs": {
+    "cosmosEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', format('cosmos-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), '2023-11-15').documentEndpoint]"
+    },
+    "appServiceHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', format('app-{0}-{1}', parameters('baseName'), variables('uniqueSuffix'))), '2023-01-01').defaultHostName]"
+    },
+    "storageWebEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', format('st{0}{1}', parameters('baseName'), variables('uniqueSuffix'))), '2023-01-01').primaryEndpoints.web]"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+      - name: Lint check (basic)
+        working-directory: backend
+        run: node -c index.js
+
+  validate-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend files exist
+        run: test -f frontend/index.html
+
+  validate-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Bicep
+        run: az bicep install || echo "bicep check skipped"

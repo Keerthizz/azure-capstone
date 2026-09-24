@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Task Manager</title></head>
+<body>
+  <h1>Task Manager</h1>
+  <div id="boards">Loading...</div>
+  <script>
+    const API = "http://localhost:3000/api";
+    fetch(`${API}/boards`)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("boards").innerText = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById("boards").innerText = "Error: " + err;
+      });
+  </script>
+</body>
+</html>
