@@ -1,352 +1,405 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>TaskFlow | Azure Capstone</title>
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-    body { background: linear-gradient(180deg, #f5f7ff 0%, #fafbff 100%); color: #1e293b; min-height: 100vh; }
+<meta charset="UTF-8">
+<title>TaskFlow | Azure Capstone</title>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3/lib/msal-browser.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+  body { display: flex; min-height: 100vh; background: #f4f5fb; color: #1e1b3a; }
 
-    header { background: linear-gradient(135deg, #4f46e5, #7c3aed, #db2777); color: white; padding: 28px 40px; box-shadow: 0 4px 24px rgba(79,70,229,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-    .brand h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-    .brand p { opacity: 0.85; margin-top: 4px; font-size: 13px; }
-    .authArea { display: flex; align-items: center; gap: 12px; }
-    #userChip { background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 30px; font-size: 13px; display: none; align-items: center; gap: 8px; }
-    #userChip .dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; }
-    button { cursor: pointer; border: none; font-family: inherit; }
-    #loginBtn, #logoutBtn { background: white; color: #4f46e5; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: 0.15s; }
-    #loginBtn:hover, #logoutBtn:hover { transform: translateY(-2px); }
-    #logoutBtn { display: none; background: rgba(255,255,255,0.2); color: white; }
+  /* Sidebar */
+  .sidebar { width: 76px; background: linear-gradient(180deg,#5b21b6,#7c3aed); display: flex; flex-direction: column; align-items: center; padding: 24px 0; gap: 28px; }
+  .sidebar .logo { font-size: 26px; }
+  .sidebar .nav-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: rgba(255,255,255,0.75); cursor: default; }
+  .sidebar .nav-icon.active { background: white; color: #7c3aed; }
 
-    .container { max-width: 1000px; margin: 32px auto; padding: 0 20px 60px; }
-    .card { background: white; border-radius: 18px; padding: 26px; margin-bottom: 24px; box-shadow: 0 2px 16px rgba(15,23,42,0.06); border: 1px solid #eef0f6; }
-    .card h2 { font-size: 17px; margin-bottom: 18px; color: #0f172a; font-weight: 700; }
-    .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-    input, textarea, select { flex: 1; min-width: 160px; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: #6366f1; background: #f8faff; }
-    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: 14px; transition: 0.15s; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(99,102,241,0.35); }
-    .btn-danger { background: #fee2e2; color: #dc2626; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
-    .btn-danger:hover { background: #fecaca; }
-    .btn-edit { background: #e0e7ff; color: #4338ca; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-right: 6px; }
-    .btn-edit:hover { background: #c7d2fe; }
-    .btn-sm { background: #f1f5f9; color: #334155; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-right: 6px; }
-    .btn-sm:hover { background: #e2e8f0; }
+  /* Main */
+  .main { flex: 1; padding: 28px 36px; max-width: 1100px; margin: 0 auto; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+  .topbar h1 { font-size: 22px; font-weight: 800; }
+  .topbar p { font-size: 13px; color: #6b7280; margin-top: 2px; }
+  .auth { display: flex; align-items: center; gap: 10px; }
+  #userChip { display: none; align-items: center; gap: 8px; background: white; padding: 8px 14px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  #userChip .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; }
+  button { cursor: pointer; border: none; font-family: inherit; }
+  #loginBtn { background: linear-gradient(135deg,#7c3aed,#a855f7); color: white; padding: 11px 22px; border-radius: 10px; font-weight: 700; font-size: 13px; box-shadow: 0 4px 14px rgba(124,58,237,0.3); }
+  #logoutBtn { display: none; background: #f1f1f6; color: #4b5563; padding: 11px 18px; border-radius: 10px; font-weight: 700; font-size: 13px; }
 
-    .board { border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; background: linear-gradient(135deg, #eef2ff, #f5f3ff); border-left: 5px solid #6366f1; transition: 0.15s; cursor: pointer; }
-    .board:hover { transform: translateX(4px); box-shadow: 0 4px 14px rgba(99,102,241,0.15); }
-    .board.selected { border-left-color: #ec4899; background: linear-gradient(135deg, #fdf2f8, #fef3f7); }
-    .board h3 { font-size: 16px; font-weight: 700; color: #1e293b; }
-    .board p { font-size: 13px; color: #64748b; margin-top: 6px; }
-    .board .meta { font-size: 11px; color: #94a3b8; margin-top: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-    .board .actions { margin-top: 10px; }
+  /* Hero */
+  .hero { background: linear-gradient(120deg,#7c3aed,#a855f7 60%,#ec4899); border-radius: 20px; padding: 28px 30px; color: white; margin-bottom: 24px; box-shadow: 0 8px 26px rgba(124,58,237,0.25); }
+  .hero h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .hero p { font-size: 13px; opacity: 0.9; margin-bottom: 16px; }
+  .hero .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .hero input, .hero textarea { flex: 1; min-width: 160px; padding: 11px 14px; border: none; border-radius: 10px; font-size: 13px; }
+  .hero button.create { background: white; color: #7c3aed; padding: 11px 20px; border-radius: 10px; font-weight: 800; font-size: 13px; }
+  .hero .msg { font-size: 12px; margin-top: 10px; font-weight: 600; }
 
-    .task { border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; background: #f0fdf9; border-left: 4px solid #10b981; }
-    .task.done { border-left-color: #94a3b8; opacity: 0.7; }
-    .task h4 { font-size: 14px; font-weight: 700; }
-    .task .status-badge { display: inline-block; font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 700; margin-top: 6px; text-transform: uppercase; }
-    .status-todo { background: #fef3c7; color: #92400e; }
-    .status-done { background: #d1fae5; color: #065f46; }
-    .task .actions { margin-top: 10px; }
+  /* Cards grid */
+  .section-title { font-size: 14px; font-weight: 800; color: #4b5563; margin: 6px 0 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 16px; margin-bottom: 26px; }
+  .proj-card { background: white; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(15,23,42,0.06); border: 1px solid #eef0f6; cursor: pointer; transition: 0.15s; position: relative; }
+  .proj-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(124,58,237,0.15); }
+  .proj-card.selected { border: 2px solid #a855f7; }
+  .proj-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+  .proj-card p { font-size: 12px; color: #6b7280; margin-bottom: 10px; min-height: 16px; }
+  .proj-card .manager { font-size: 11px; color: #9333ea; font-weight: 700; background: #f3e8ff; display: inline-block; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; }
+  .proj-card .icon-row { display: flex; gap: 8px; position: absolute; top: 14px; right: 14px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 8px; background: #f4f5fb; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #6b7280; }
+  .icon-btn.danger:hover { background: #fee2e2; color: #dc2626; }
+  .icon-btn.edit:hover { background: #ede9fe; color: #7c3aed; }
+  .empty { color: #9ca3af; font-size: 13px; text-align: center; padding: 26px; background: white; border-radius: 14px; border: 1px dashed #e2e8f0; }
 
-    .comment { background: #f8fafc; border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 13px; border-left: 3px solid #cbd5e1; }
-    .comment .author { font-weight: 700; color: #475569; font-size: 11px; }
-
-    .empty { color: #94a3b8; font-size: 14px; text-align: center; padding: 24px; }
-    .status-msg { font-size: 13px; margin-top: 10px; font-weight: 500; }
-    .status-msg.error { color: #dc2626; }
-    .status-msg.ok { color: #059669; }
-    .section-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; margin: 16px 0 8px; letter-spacing: 0.4px; }
-  </style>
+  /* Tasks panel */
+  .task-panel { background: white; border-radius: 18px; padding: 22px; box-shadow: 0 2px 12px rgba(15,23,42,0.06); border: 1px solid #eef0f6; }
+  .task-panel h2 { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+  .task-add-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .task-add-row input { flex: 1; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px; }
+  .task-add-row button { background: linear-gradient(135deg,#7c3aed,#a855f7); color: white; padding: 11px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; }
+  .task-item { background: #faf9ff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; border-left: 4px solid #7c3aed; }
+  .task-item.done { border-left-color: #22c55e; opacity: 0.75; }
+  .task-item .row { display: flex; justify-content: space-between; align-items: center; }
+  .task-item h4 { font-size: 13.5px; font-weight: 700; }
+  .badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase; }
+  .badge.todo { background: #fef3c7; color: #92400e; }
+  .badge.done { background: #dcfce7; color: #166534; }
+  .task-actions { display: flex; gap: 6px; }
+  .mini-btn { font-size: 11px; padding: 5px 10px; border-radius: 7px; font-weight: 700; background: #eef0f6; color: #4b5563; }
+  .mini-btn.danger { background: #fee2e2; color: #dc2626; }
+  .comments { margin-top: 10px; }
+  .comment { background: white; border: 1px solid #eef0f6; border-radius: 8px; padding: 8px 10px; margin-top: 6px; font-size: 12px; }
+  .comment .author { font-weight: 800; color: #7c3aed; font-size: 10.5px; }
+  .comment-row { display: flex; gap: 8px; margin-top: 8px; }
+  .comment-row input { flex: 1; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; }
+  .comment-row button { background: #ede9fe; color: #7c3aed; padding: 8px 14px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+</style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <h1>TaskFlow</h1>
+
+<div class="sidebar">
+  <div class="logo">🔷</div>
+  <div class="nav-icon active">🏠</div>
+  <div class="nav-icon">✅</div>
+  <div class="nav-icon">💬</div>
+  <div class="nav-icon">⚙️</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>TaskFlow Dashboard</h1>
       <p>Azure Capstone — Secure Task &amp; Project Manager</p>
     </div>
-    <div class="authArea">
+    <div class="auth">
       <div id="userChip"><span class="dot"></span><span id="userName"></span></div>
       <button id="loginBtn">Login with Microsoft</button>
       <button id="logoutBtn">Logout</button>
     </div>
-  </header>
-
-  <div class="container">
-    <div class="card">
-      <h2>➕ Create Project</h2>
-      <div class="form-row">
-        <input id="boardName" placeholder="Project name" />
-        <input id="boardManager" placeholder="Manager name" />
-      </div>
-      <div class="form-row">
-        <textarea id="boardDesc" placeholder="Description" rows="2"></textarea>
-      </div>
-      <button class="btn-primary" id="createBtn">Create Project</button>
-      <div class="status-msg" id="status"></div>
-    </div>
-
-    <div class="card">
-      <h2>📁 Your Projects</h2>
-      <div id="boards" class="empty">Login pannunga first</div>
-    </div>
-
-    <div class="card" id="taskSection" style="display:none;">
-      <h2>✅ Tasks for <span id="selectedBoardName"></span></h2>
-      <div class="form-row">
-        <input id="taskName" placeholder="Task name" />
-        <button class="btn-primary" id="addTaskBtn">Add Task</button>
-      </div>
-      <div class="status-msg" id="taskStatus"></div>
-      <div id="taskList" style="margin-top:14px;"></div>
-    </div>
   </div>
 
-  <script>
-    const REDIRECT_URI = window.location.origin;
-    const msalConfig = {
-      auth: {
-        clientId: "01ead7c4-a482-4307-a6ed-b2592b820444",
-        authority: "https://login.microsoftonline.com/b8a38f66-d491-4f70-a5b1-ed0072b1065d",
-        redirectUri: REDIRECT_URI
-      }
-    };
-    const msalInstance = new msal.PublicClientApplication(msalConfig);
-    const API = "https://capstone-12662.centralindia.cloudapp.azure.com/api";
-    const apiScope = "api://889db145-f87e-4b40-b150-5c025330f597/access";
-    let currentBoards = [];
-    let selectedBoardId = null;
+  <div class="hero">
+    <h2>Create a new project</h2>
+    <p>Boards, tasks and comments — organise your work in one place</p>
+    <div class="form-row">
+      <input id="boardName" placeholder="Project name" />
+      <input id="boardManager" placeholder="Manager name" />
+    </div>
+    <div class="form-row" style="margin-top:10px;">
+      <textarea id="boardDesc" placeholder="Description" rows="1"></textarea>
+      <button class="create" id="createBtn">+ Create Project</button>
+    </div>
+    <div class="msg" id="status"></div>
+  </div>
 
-    async function init() {
-      await msalInstance.initialize();
-      const response = await msalInstance.handleRedirectPromise();
-      if (response) { msalInstance.setActiveAccount(response.account); onLoggedIn(); }
-      else if (msalInstance.getActiveAccount()) { onLoggedIn(); }
+  <div class="section-title">Your Projects</div>
+  <div id="boards" class="grid"><div class="empty">Login pannunga first</div></div>
 
-      document.getElementById("loginBtn").addEventListener("click", login);
-      document.getElementById("logoutBtn").addEventListener("click", logout);
-      document.getElementById("createBtn").addEventListener("click", createBoard);
-      document.getElementById("addTaskBtn").addEventListener("click", addTask);
+  <div id="taskSection" style="display:none;">
+    <div class="section-title">Tasks — <span id="selectedBoardName"></span></div>
+    <div class="task-panel">
+      <div class="task-add-row">
+        <input id="taskName" placeholder="New task name..." />
+        <button id="addTaskBtn">Add Task</button>
+      </div>
+      <div class="msg" id="taskStatus"></div>
+      <div id="taskList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const REDIRECT_URI = window.location.origin;
+  const msalConfig = {
+    auth: {
+      clientId: "01ead7c4-a482-4307-a6ed-b2592b820444",
+      authority: "https://login.microsoftonline.com/b8a38f66-d491-4f70-a5b1-ed0072b1065d",
+      redirectUri: REDIRECT_URI
     }
+  };
+  const msalInstance = new msal.PublicClientApplication(msalConfig);
+  const API = "https://capstone-12662.centralindia.cloudapp.azure.com/api";
+  const apiScope = "api://889db145-f87e-4b40-b150-5c025330f597/access";
+  let currentBoards = [];
+  let selectedBoardId = null;
 
-    function onLoggedIn() {
-      const account = msalInstance.getActiveAccount();
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("logoutBtn").style.display = "inline-block";
-      document.getElementById("userChip").style.display = "flex";
-      document.getElementById("userName").innerText = account?.username || "Signed in";
+  async function init() {
+    await msalInstance.initialize();
+    const response = await msalInstance.handleRedirectPromise();
+    if (response) { msalInstance.setActiveAccount(response.account); onLoggedIn(); }
+    else if (msalInstance.getActiveAccount()) { onLoggedIn(); }
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+    document.getElementById("logoutBtn").addEventListener("click", () => msalInstance.logoutRedirect());
+    document.getElementById("createBtn").addEventListener("click", createBoard);
+    document.getElementById("addTaskBtn").addEventListener("click", addTask);
+
+    // Event delegation: boards grid clicks
+    document.getElementById("boards").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      const owner = btn.dataset.owner;
+      if (action === "select") selectBoard(id, btn.dataset.name);
+      if (action === "edit") { e.stopPropagation(); editBoard(id, owner); }
+      if (action === "delete") { e.stopPropagation(); deleteBoard(id, owner); }
+    });
+
+    // Event delegation: task list clicks
+    document.getElementById("taskList").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === "toggle") toggleTask(id);
+      if (action === "delete-task") deleteTask(id);
+      if (action === "comment") addComment(id);
+    });
+  }
+
+  function onLoggedIn() {
+    const account = msalInstance.getActiveAccount();
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("logoutBtn").style.display = "inline-block";
+    document.getElementById("userChip").style.display = "flex";
+    document.getElementById("userName").innerText = account?.username || "Signed in";
+    loadBoards();
+  }
+
+  async function login() {
+    try { await msalInstance.loginRedirect({ scopes: [apiScope] }); }
+    catch (err) { setMsg("status", "Login error: " + err, true); }
+  }
+
+  async function getToken() {
+    const account = msalInstance.getActiveAccount();
+    const t = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
+    return t.accessToken;
+  }
+
+  function setMsg(id, text, isError) {
+    const el = document.getElementById(id);
+    el.innerText = text;
+    el.style.color = isError ? "#dc2626" : "#d1fae5";
+  }
+
+  function esc(s) { return (s || "").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // ---------- BOARDS ----------
+  async function loadBoards() {
+    const el = document.getElementById("boards");
+    el.innerHTML = '<div class="empty">Loading...</div>';
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      currentBoards = data;
+      if (!data.length) { el.innerHTML = '<div class="empty">No projects yet. Create one above.</div>'; return; }
+      el.innerHTML = data.map(b => `
+        <div class="proj-card ${b.id === selectedBoardId ? 'selected' : ''}" data-action="select" data-id="${b.id}" data-name="${esc(b.name)}">
+          <div class="icon-row">
+            <div class="icon-btn edit" data-action="edit" data-id="${b.id}" data-owner="${b.ownerId}">✎</div>
+            <div class="icon-btn danger" data-action="delete" data-id="${b.id}" data-owner="${b.ownerId}">🗑</div>
+          </div>
+          <h3>${esc(b.name) || "Untitled"}</h3>
+          <p>${esc(b.description) || "No description"}</p>
+          <span class="manager">👤 ${esc(b.manager) || "Unassigned"}</span>
+        </div>
+      `).join("");
+    } catch (err) { el.innerHTML = '<div class="empty">Error: ' + err + '</div>'; }
+  }
+
+  async function createBoard() {
+    const name = document.getElementById("boardName").value.trim();
+    const manager = document.getElementById("boardManager").value.trim();
+    const description = document.getElementById("boardDesc").value.trim();
+    if (!name) { setMsg("status", "Project name venum.", true); return; }
+    setMsg("status", "Creating...", false);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: Date.now().toString(), ownerId: "user1", name, manager, description })
+      });
+      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      setMsg("status", "Project created!", false);
+      document.getElementById("boardName").value = "";
+      document.getElementById("boardManager").value = "";
+      document.getElementById("boardDesc").value = "";
       loadBoards();
-    }
+    } catch (err) { setMsg("status", "Error: " + err, true); }
+  }
 
-    async function login() {
-      try { await msalInstance.loginRedirect({ scopes: [apiScope] }); }
-      catch (err) { document.getElementById("status").innerText = "Login error: " + err; }
-    }
+  async function editBoard(id, ownerId) {
+    const board = currentBoards.find(b => b.id === id);
+    const newName = prompt("Edit project name:", board ? board.name : "");
+    if (newName === null || !newName.trim()) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ownerId, name: newName.trim() })
+      });
+      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      loadBoards();
+    } catch (err) { alert("Error updating project: " + err); }
+  }
 
-    function logout() {
-      msalInstance.logoutRedirect();
-    }
+  async function deleteBoard(id, ownerId) {
+    if (!confirm("Delete this project?")) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards/${id}?ownerId=${ownerId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok && res.status !== 204) throw new Error(`Backend returned ${res.status}`);
+      if (selectedBoardId === id) { selectedBoardId = null; document.getElementById("taskSection").style.display = "none"; }
+      loadBoards();
+    } catch (err) { alert("Error deleting project: " + err); }
+  }
 
-    async function getToken() {
-      const account = msalInstance.getActiveAccount();
-      const tokenResponse = await msalInstance.acquireTokenSilent({ scopes: [apiScope], account });
-      return tokenResponse.accessToken;
-    }
+  function selectBoard(id, name) {
+    selectedBoardId = id;
+    document.getElementById("selectedBoardName").innerText = name;
+    document.getElementById("taskSection").style.display = "block";
+    loadBoards();
+    loadTasks();
+  }
 
-    function setMsg(id, text, type) {
-      const el = document.getElementById(id);
-      el.innerText = text;
-      el.className = "status-msg " + (type || "");
-    }
-
-    // ---------- BOARDS ----------
-    async function loadBoards() {
-      const el = document.getElementById("boards");
-      el.innerHTML = '<div class="empty">Loading...</div>';
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/boards`, { headers: { Authorization: `Bearer ${token}` } });
-        const data = await res.json();
-        currentBoards = data;
-        if (!data.length) { el.innerHTML = '<div class="empty">No projects yet. Create one above.</div>'; return; }
-        el.innerHTML = data.map(b => `
-          <div class="board ${b.id === selectedBoardId ? 'selected' : ''}" onclick="selectBoard('${b.id}','${(b.name||'').replace(/'/g,"")}')">
-            <h3>${b.name || "Untitled"}</h3>
-            <p>${b.description || "No description"}</p>
-            <div class="meta">Manager: ${b.manager || "-"}</div>
-            <div class="actions">
-              <button class="btn-edit" onclick="event.stopPropagation(); editBoard('${b.id}','${b.ownerId}')">Edit</button>
-              <button class="btn-danger" onclick="event.stopPropagation(); deleteBoard('${b.id}','${b.ownerId}')">Delete</button>
+  // ---------- TASKS ----------
+  async function loadTasks() {
+    if (!selectedBoardId) return;
+    const el = document.getElementById("taskList");
+    el.innerHTML = '<div class="empty">Loading tasks...</div>';
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+      const tasks = await res.json();
+      if (!tasks.length) { el.innerHTML = '<div class="empty">No tasks yet.</div>'; return; }
+      el.innerHTML = tasks.map(t => `
+        <div class="task-item ${t.status === 'done' ? 'done' : ''}">
+          <div class="row">
+            <div>
+              <h4>${esc(t.name)}</h4>
+              <span class="badge ${t.status === 'done' ? 'done' : 'todo'}">${t.status || 'todo'}</span>
+            </div>
+            <div class="task-actions">
+              <button class="mini-btn" data-action="toggle" data-id="${t.id}">${t.status === 'done' ? 'Mark Todo' : 'Mark Done'}</button>
+              <button class="mini-btn danger" data-action="delete-task" data-id="${t.id}">Delete</button>
             </div>
           </div>
-        `).join("");
-      } catch (err) { el.innerText = "Error: " + err; }
-    }
+          <div class="comments" id="comments-${t.id}"></div>
+          <div class="comment-row">
+            <input id="commentInput-${t.id}" placeholder="Add a comment..." />
+            <button data-action="comment" data-id="${t.id}">Post</button>
+          </div>
+        </div>
+      `).join("");
+      tasks.forEach(t => loadComments(t.id));
+    } catch (err) { el.innerHTML = '<div class="empty">Error: ' + err + '</div>'; }
+  }
 
-    async function createBoard() {
-      const name = document.getElementById("boardName").value.trim();
-      const manager = document.getElementById("boardManager").value.trim();
-      const description = document.getElementById("boardDesc").value.trim();
-      if (!name) { setMsg("status", "Project name venum.", "error"); return; }
-      setMsg("status", "Creating...", "");
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/boards`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ id: Date.now().toString(), ownerId: "user1", name, manager, description })
-        });
-        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
-        setMsg("status", "Project created!", "ok");
-        document.getElementById("boardName").value = "";
-        document.getElementById("boardManager").value = "";
-        document.getElementById("boardDesc").value = "";
-        loadBoards();
-      } catch (err) { setMsg("status", "Error: " + err, "error"); }
-    }
-
-    async function editBoard(id, ownerId) {
-      const board = currentBoards.find(b => b.id === id);
-      const newName = prompt("Edit project name:", board.name);
-      if (newName === null) return;
-      try {
-        const token = await getToken();
-        await fetch(`${API}/boards/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ ownerId, name: newName })
-        });
-        loadBoards();
-      } catch (err) { alert("Error updating: " + err); }
-    }
-
-    async function deleteBoard(id, ownerId) {
-      if (!confirm("Delete this project?")) return;
-      try {
-        const token = await getToken();
-        await fetch(`${API}/boards/${id}?ownerId=${ownerId}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (selectedBoardId === id) { selectedBoardId = null; document.getElementById("taskSection").style.display = "none"; }
-        loadBoards();
-      } catch (err) { alert("Error deleting: " + err); }
-    }
-
-    function selectBoard(id, name) {
-      selectedBoardId = id;
-      document.getElementById("selectedBoardName").innerText = name;
-      document.getElementById("taskSection").style.display = "block";
-      loadBoards();
+  async function addTask() {
+    const name = document.getElementById("taskName").value.trim();
+    if (!selectedBoardId || !name) { setMsg("taskStatus", "Task name venum.", true); return; }
+    setMsg("taskStatus", "Adding...", false);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: Date.now().toString(), name })
+      });
+      if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+      setMsg("taskStatus", "", false);
+      document.getElementById("taskName").value = "";
       loadTasks();
-    }
+    } catch (err) { setMsg("taskStatus", "Error: " + err, true); }
+  }
 
-    // ---------- TASKS ----------
-    async function loadTasks() {
-      if (!selectedBoardId) return;
-      const listEl = document.getElementById("taskList");
-      listEl.innerHTML = '<div class="empty">Loading tasks...</div>';
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
-        const tasks = await res.json();
-        if (!tasks.length) { listEl.innerHTML = '<div class="empty">No tasks yet.</div>'; return; }
-        listEl.innerHTML = tasks.map(t => `
-          <div class="task ${t.status === 'done' ? 'done' : ''}">
-            <h4>${t.name}</h4>
-            <span class="status-badge status-${t.status === 'done' ? 'done' : 'todo'}">${t.status || 'todo'}</span>
-            <div class="actions">
-              <button class="btn-sm" onclick="toggleTask('${t.id}')">${t.status === 'done' ? 'Mark Todo' : 'Mark Done'}</button>
-              <button class="btn-danger" onclick="deleteTask('${t.id}')">Delete</button>
-            </div>
-            <div id="comments-${t.id}"></div>
-            <div class="form-row" style="margin-top:8px;">
-              <input id="commentInput-${t.id}" placeholder="Add a comment..." style="font-size:12px; padding:8px;" />
-              <button class="btn-sm" onclick="addComment('${t.id}')">Comment</button>
-            </div>
-          </div>
-        `).join("");
-        tasks.forEach(t => loadComments(t.id));
-      } catch (err) { listEl.innerText = "Error: " + err; }
-    }
+  async function toggleTask(id) {
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
+      const tasks = await res.json();
+      const t = tasks.find(x => x.id === id);
+      const newStatus = (t && t.status === "done") ? "todo" : "done";
+      const r2 = await fetch(`${API}/tasks/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ boardId: selectedBoardId, status: newStatus })
+      });
+      if (!r2.ok) throw new Error(`Backend returned ${r2.status}`);
+      loadTasks();
+    } catch (err) { alert("Error updating task: " + err); }
+  }
 
-    async function addTask() {
-      const name = document.getElementById("taskName").value.trim();
-      if (!selectedBoardId || !name) { setMsg("taskStatus", "Task name venum.", "error"); return; }
-      setMsg("taskStatus", "Adding...", "");
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ id: Date.now().toString(), name })
-        });
-        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
-        setMsg("taskStatus", "", "");
-        document.getElementById("taskName").value = "";
-        loadTasks();
-      } catch (err) { setMsg("taskStatus", "Error: " + err, "error"); }
-    }
+  async function deleteTask(id) {
+    if (!confirm("Delete this task?")) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/tasks/${id}?boardId=${selectedBoardId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok && res.status !== 204) throw new Error(`Backend returned ${res.status}`);
+      loadTasks();
+    } catch (err) { alert("Error deleting task: " + err); }
+  }
 
-    async function toggleTask(id) {
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/boards/${selectedBoardId}/tasks`, { headers: { Authorization: `Bearer ${token}` } });
-        const tasks = await res.json();
-        const t = tasks.find(x => x.id === id);
-        const newStatus = t.status === "done" ? "todo" : "done";
-        await fetch(`${API}/tasks/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ boardId: selectedBoardId, status: newStatus })
-        });
-        loadTasks();
-      } catch (err) { alert("Error: " + err); }
-    }
+  // ---------- COMMENTS ----------
+  async function loadComments(taskId) {
+    const el = document.getElementById(`comments-${taskId}`);
+    if (!el) return;
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API}/tasks/${taskId}/comments`, { headers: { Authorization: `Bearer ${token}` } });
+      const comments = await res.json();
+      el.innerHTML = comments.map(c => `<div class="comment"><div class="author">${esc(c.author) || 'User'}</div>${esc(c.text)}</div>`).join("");
+    } catch (err) { /* silent */ }
+  }
 
-    async function deleteTask(id) {
-      if (!confirm("Delete this task?")) return;
-      try {
-        const token = await getToken();
-        await fetch(`${API}/tasks/${id}?boardId=${selectedBoardId}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        loadTasks();
-      } catch (err) { alert("Error: " + err); }
-    }
+  async function addComment(taskId) {
+    const input = document.getElementById(`commentInput-${taskId}`);
+    const text = input.value.trim();
+    if (!text) return;
+    try {
+      const token = await getToken();
+      const account = msalInstance.getActiveAccount();
+      await fetch(`${API}/tasks/${taskId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: Date.now().toString(), text, author: account?.username || "User" })
+      });
+      input.value = "";
+      loadComments(taskId);
+    } catch (err) { alert("Error adding comment: " + err); }
+  }
 
-    // ---------- COMMENTS ----------
-    async function loadComments(taskId) {
-      const el = document.getElementById(`comments-${taskId}`);
-      if (!el) return;
-      try {
-        const token = await getToken();
-        const res = await fetch(`${API}/tasks/${taskId}/comments`, { headers: { Authorization: `Bearer ${token}` } });
-        const comments = await res.json();
-        el.innerHTML = comments.map(c => `<div class="comment"><div class="author">${c.author || 'User'}</div>${c.text}</div>`).join("");
-      } catch (err) { /* silent */ }
-    }
-
-    async function addComment(taskId) {
-      const input = document.getElementById(`commentInput-${taskId}`);
-      const text = input.value.trim();
-      if (!text) return;
-      try {
-        const token = await getToken();
-        const account = msalInstance.getActiveAccount();
-        await fetch(`${API}/tasks/${taskId}/comments`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ id: Date.now().toString(), text, author: account?.username || "User" })
-        });
-        input.value = "";
-        loadComments(taskId);
-      } catch (err) { alert("Error: " + err); }
-    }
-
-    init();
-  </script>
+  init();
+</script>
 </body>
 </html>
