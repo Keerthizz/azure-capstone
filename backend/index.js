@@ -1,6 +1,11 @@
 const appInsights = require("applicationinsights");
 appInsights.setup().start();
 
+const appInsights = require("applicationinsights");
+if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
+  appInsights.setup().start();
+}
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
