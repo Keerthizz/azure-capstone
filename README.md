@@ -94,3 +94,4 @@ Database: `taskdb`
 
 - TLS certificate on the Application Gateway is self-signed (acceptable for a demo/capstone environment); a production deployment would use a CA-issued certificate.
 - The demo uses a single Dev environment; a Prod stage with manual approval would be the next step for a production-grade pipeline.
+
