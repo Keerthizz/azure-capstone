@@ -1,3 +1,6 @@
+const appInsights = require("applicationinsights");
+appInsights.setup().start();
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
