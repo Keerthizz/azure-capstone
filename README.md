@@ -92,9 +92,11 @@ Database: `taskdb`
 
 ## 10. Screen Recordings
 
-* **User Login Demo:** Watch Recording
-* **Edit and Delete Demo:** Watch Recording
-* **User Logout Demo:** Watch Recording
+## 10. Screen Recordings
+
+- **User Login Demo:** [Watch Recording](https://alnatum-my.sharepoint.com/:v:/p/kreethi_gnanam/IQC8EFzkCQYLQJPM2lDPHWEcAQ7qFG57J15p09Oq0yjNZTA?e=CQKqD4)
+- **Edit and Delete Demo:** [Watch Recording](https://alnatum-my.sharepoint.com/:v:/p/kreethi_gnanam/IQDnWybMT4Q4SYUegqoeIg12AYLTS6o2_NUXOpjltnZYe9Q?e=8TVGad)
+- **User Logout Demo:** [Watch Recording](https://alnatum-my.sharepoint.com/:v:/p/kreethi_gnanam/IQALa9OHCqnmSpZnbhfyVEAAASMZl9w6Yvji3_zANd_vfNQ?e=H30GZk)
 
 ## 11. Known Limitations / Notes
 
