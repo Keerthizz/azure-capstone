@@ -90,8 +90,14 @@ Database: `taskdb`
 - Metric alert: backend HTTP 5xx error count
 - Metric alert: Cosmos DB Normalized RU Consumption > 80%
 
-## 10. Known Limitations / Notes
+## 10. Screen Recordings
 
-- TLS certificate on the Application Gateway is self-signed (acceptable for a demo/capstone environment); a production deployment would use a CA-issued certificate.
-- The demo uses a single Dev environment; a Prod stage with manual approval would be the next step for a production-grade pipeline.
+* **User Login Demo:** Watch Recording
+* **Edit and Delete Demo:** Watch Recording
+* **User Logout Demo:** Watch Recording
+
+## 11. Known Limitations / Notes
+
+* TLS certificate on the Application Gateway is self-signed (acceptable for a demo/capstone environment); a production deployment would use a CA-issued certificate.
+* The demo uses a single Dev environment; a Prod stage with manual approval would be the next step for a production-grade pipeline.
 
